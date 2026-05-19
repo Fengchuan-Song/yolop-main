@@ -215,16 +215,14 @@ class SegmentationMetric(object):
         # IoU = TP / (TP + FP + FN)
         intersection = np.diag(self.confusionMatrix)
         union = np.sum(self.confusionMatrix, axis=1) + np.sum(self.confusionMatrix, axis=0) - np.diag(self.confusionMatrix)
-        IoU = intersection / union
-        IoU[np.isnan(IoU)] = 0
+        IoU = np.divide(intersection, union, out=np.zeros_like(intersection), where=union != 0)
         mIoU = np.nanmean(IoU)
         return mIoU
     
     def IntersectionOverUnion(self):
         intersection = np.diag(self.confusionMatrix)
         union = np.sum(self.confusionMatrix, axis=1) + np.sum(self.confusionMatrix, axis=0) - np.diag(self.confusionMatrix)
-        IoU = intersection / union
-        IoU[np.isnan(IoU)] = 0
+        IoU = np.divide(intersection, union, out=np.zeros_like(intersection), where=union != 0)
         return IoU[1]
 
     def genConfusionMatrix(self, imgPredict, imgLabel):
@@ -239,9 +237,8 @@ class SegmentationMetric(object):
     def Frequency_Weighted_Intersection_over_Union(self):
         # FWIOU =     [(TP+FN)/(TP+FP+TN+FN)] *[TP / (TP + FP + FN)]
         freq = np.sum(self.confusionMatrix, axis=1) / np.sum(self.confusionMatrix)
-        iu = np.diag(self.confusionMatrix) / (
-                np.sum(self.confusionMatrix, axis=1) + np.sum(self.confusionMatrix, axis=0) -
-                np.diag(self.confusionMatrix))
+        union = np.sum(self.confusionMatrix, axis=1) + np.sum(self.confusionMatrix, axis=0) - np.diag(self.confusionMatrix)
+        iu = np.divide(np.diag(self.confusionMatrix), union, out=np.zeros_like(np.diag(self.confusionMatrix)), where=union != 0)
         FWIoU = (freq[freq > 0] * iu[freq > 0]).sum()
         return FWIoU
 

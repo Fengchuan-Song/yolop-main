@@ -84,13 +84,13 @@ class WaterScenesDataset(AutoDriveDataset):
         label = cv2.imread(path, 0)
         if label is None:
             raise FileNotFoundError('Drivable-area mask not found or unreadable: {}'.format(path))
-        return np.where(label == 8, 255, 0).astype(np.uint8)
+        return np.where((label == 8) | (label == 19), 255, 0).astype(np.uint8)
 
     def read_lane_label(self, path):
         label = cv2.imread(path, 0)
         if label is None:
             raise FileNotFoundError('Waterline mask not found or unreadable: {}'.format(path))
-        return np.where(label == 1, 255, 0).astype(np.uint8)
+        return np.where(label > 0, 255, 0).astype(np.uint8)
 
     def evaluate(self, cfg, preds, output_dir, *args, **kwargs):
         pass
