@@ -360,7 +360,7 @@ def main():
             logger.info(msg)
 
             if wandb_run is not None:
-                wandb.log({
+                wandb_metrics = {
                     'mAP50(eval)': float(detect_results[2]),
                     'mAP50-95(eval)': float(detect_results[3]),
                     'mAP75(eval)': float(detect_results[4]),
@@ -368,7 +368,10 @@ def main():
                     'mIoU se(eval)': float(da_segment_results[2]),
                     'mIoU wl(eval)': float(ll_segment_results[2]),
                     'epoch': epoch
-                }, step=epoch)
+                }
+                wandb_run.log(wandb_metrics, step=epoch)
+                wandb_run.summary.update(wandb_metrics)
+                logger.info('=> W&B eval metrics logged for epoch {}'.format(epoch))
 
             # if perf_indicator >= best_perf:
             #     best_perf = perf_indicator

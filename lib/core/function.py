@@ -344,7 +344,7 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
                         f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
             # W&B logging
-            if config.TEST.PLOTS and len(wandb_images) < log_imgs:
+            if False and config.TEST.PLOTS and len(wandb_images) < log_imgs:
                 box_data = [{"position": {"minX": xyxy[0], "minY": xyxy[1], "maxX": xyxy[2], "maxY": xyxy[3]},
                              "class_id": int(cls),
                              "box_caption": "%s %.3f" % (names[cls], conf),
@@ -448,9 +448,6 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
     # Plots
     if config.TEST.PLOTS:
         confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
-        if wandb and wandb.run:
-            wandb.log({"Images": wandb_images})
-            wandb.log({"Validation": [wandb.Image(str(f), caption=f.name) for f in sorted(Path(save_dir).glob('test*.jpg'))]})
 
     # Save JSON
     if config.TEST.SAVE_JSON and len(jdict):
