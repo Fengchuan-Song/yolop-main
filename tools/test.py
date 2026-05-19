@@ -47,6 +47,9 @@ def main():
     # set all the configurations
     args = parse_args()
     update_config(cfg, args)
+    cfg.defrost()
+    cfg.DATASET.TEST_SET = '2007_test.txt'
+    cfg.freeze()
 
     # TODO: handle distributed training logger
     # set the logger, tb_log_dir means tensorboard logdir
@@ -139,11 +142,11 @@ def main():
     msg =   'Test:    Loss({loss:.3f})\n' \
             'Driving area Segment: Acc({da_seg_acc:.3f})    IOU ({da_seg_iou:.3f})    mIOU({da_seg_miou:.3f})\n' \
                       'Lane line Segment: Acc({ll_seg_acc:.3f})    IOU ({ll_seg_iou:.3f})  mIOU({ll_seg_miou:.3f})\n' \
-                      'Detect: P({p:.3f})  R({r:.3f})  mAP@0.5({map50:.3f})  mAP@0.5:0.95({map:.3f})\n'\
+                      'Detect: P({p:.3f})  R({r:.3f})  mAP@0.5({map50:.3f})  mAP@0.75({map75:.3f})  mAP@0.5:0.95({map:.3f})  mAR@0.5:0.95({mar:.3f})\n'\
                       'Time: inference({t_inf:.4f}s/frame)  nms({t_nms:.4f}s/frame)'.format(
                           loss=total_loss, da_seg_acc=da_segment_results[0],da_seg_iou=da_segment_results[1],da_seg_miou=da_segment_results[2],
                           ll_seg_acc=ll_segment_results[0],ll_seg_iou=ll_segment_results[1],ll_seg_miou=ll_segment_results[2],
-                          p=detect_results[0],r=detect_results[1],map50=detect_results[2],map=detect_results[3],
+                          p=detect_results[0],r=detect_results[1],map50=detect_results[2],map=detect_results[3],map75=detect_results[4],mar=detect_results[5],
                           t_inf=times[0], t_nms=times[1])
     logger.info(msg)
     print("test finish")

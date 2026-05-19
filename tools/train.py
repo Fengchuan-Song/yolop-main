@@ -86,8 +86,10 @@ def main():
 
     logger, final_output_dir, tb_log_dir = create_logger(
         cfg, cfg.LOG_DIR, 'train', rank=rank)
+    weights_output_dir = cfg.WEIGHTS_DIR
 
     if rank in [-1, 0]:
+        os.makedirs(weights_output_dir, exist_ok=True)
         logger.info(pprint.pformat(args))
         logger.info(cfg)
 
@@ -96,8 +98,22 @@ def main():
             'train_global_steps': 0,
             'valid_global_steps': 0,
         }
+        try:
+            import wandb
+            wandb_run = wandb.init(
+                project='Achelous++',
+                config={'cfg': cfg.dump()},
+                name='YOLOP-WaterScenes',
+                resume='allow'
+            )
+        except ImportError:
+            wandb = None
+            wandb_run = None
+            logger.warning('wandb is not installed; W&B logging is disabled.')
     else:
         writer_dict = None
+        wandb = None
+        wandb_run = None
 
     # cudnn related setting
     cudnn.benchmark = cfg.CUDNN.BENCHMARK
@@ -145,9 +161,7 @@ def main():
     begin_epoch = cfg.TRAIN.BEGIN_EPOCH
 
     if rank in [-1, 0]:
-        checkpoint_file = os.path.join(
-            os.path.join(cfg.LOG_DIR, cfg.DATASET.DATASET), 'checkpoint.pth'
-        )
+        checkpoint_file = os.path.join(weights_output_dir, 'checkpoint.pth')
         if os.path.exists(cfg.MODEL.PRETRAINED):
             logger.info("=> loading model '{}'".format(cfg.MODEL.PRETRAINED))
             checkpoint = torch.load(cfg.MODEL.PRETRAINED)
@@ -337,13 +351,24 @@ def main():
             msg = 'Epoch: [{0}]    Loss({loss:.3f})\n' \
                       'Driving area Segment: Acc({da_seg_acc:.3f})    IOU ({da_seg_iou:.3f})    mIOU({da_seg_miou:.3f})\n' \
                       'Lane line Segment: Acc({ll_seg_acc:.3f})    IOU ({ll_seg_iou:.3f})  mIOU({ll_seg_miou:.3f})\n' \
-                      'Detect: P({p:.3f})  R({r:.3f})  mAP@0.5({map50:.3f})  mAP@0.5:0.95({map:.3f})\n'\
+                      'Detect: P({p:.3f})  R({r:.3f})  mAP@0.5({map50:.3f})  mAP@0.75({map75:.3f})  mAP@0.5:0.95({map:.3f})  mAR@0.5:0.95({mar:.3f})\n'\
                       'Time: inference({t_inf:.4f}s/frame)  nms({t_nms:.4f}s/frame)'.format(
                           epoch,  loss=total_loss, da_seg_acc=da_segment_results[0],da_seg_iou=da_segment_results[1],da_seg_miou=da_segment_results[2],
                           ll_seg_acc=ll_segment_results[0],ll_seg_iou=ll_segment_results[1],ll_seg_miou=ll_segment_results[2],
-                          p=detect_results[0],r=detect_results[1],map50=detect_results[2],map=detect_results[3],
+                          p=detect_results[0],r=detect_results[1],map50=detect_results[2],map=detect_results[3],map75=detect_results[4],mar=detect_results[5],
                           t_inf=times[0], t_nms=times[1])
             logger.info(msg)
+
+            if wandb_run is not None:
+                wandb.log({
+                    'mAP50(eval)': float(detect_results[2]),
+                    'mAP50-95(eval)': float(detect_results[3]),
+                    'mAP75(eval)': float(detect_results[4]),
+                    'mAR50-95(eval)': float(detect_results[5]),
+                    'mIoU se(eval)': float(da_segment_results[2]),
+                    'mIoU wl(eval)': float(ll_segment_results[2]),
+                    'epoch': epoch
+                }, step=epoch)
 
             # if perf_indicator >= best_perf:
             #     best_perf = perf_indicator
@@ -353,7 +378,7 @@ def main():
 
         # save checkpoint model and best model
         if rank in [-1, 0]:
-            savepath = os.path.join(final_output_dir, f'epoch-{epoch}.pth')
+            savepath = os.path.join(weights_output_dir, f'epoch-{epoch}.pth')
             logger.info('=> saving checkpoint to {}'.format(savepath))
             save_checkpoint(
                 epoch=epoch,
@@ -362,7 +387,7 @@ def main():
                 # 'best_state_dict': model.module.state_dict(),
                 # 'perf': perf_indicator,
                 optimizer=optimizer,
-                output_dir=final_output_dir,
+                output_dir=weights_output_dir,
                 filename=f'epoch-{epoch}.pth'
             )
             save_checkpoint(
@@ -372,14 +397,14 @@ def main():
                 # 'best_state_dict': model.module.state_dict(),
                 # 'perf': perf_indicator,
                 optimizer=optimizer,
-                output_dir=os.path.join(cfg.LOG_DIR, cfg.DATASET.DATASET),
+                output_dir=weights_output_dir,
                 filename='checkpoint.pth'
             )
 
     # save final model
     if rank in [-1, 0]:
         final_model_state_file = os.path.join(
-            final_output_dir, 'final_state.pth'
+            weights_output_dir, 'final_state.pth'
         )
         logger.info('=> saving final model state to {}'.format(
             final_model_state_file)
@@ -387,6 +412,8 @@ def main():
         model_state = model.module.state_dict() if is_parallel(model) else model.state_dict()
         torch.save(model_state, final_model_state_file)
         writer_dict['writer'].close()
+        if wandb_run is not None:
+            wandb.finish()
     else:
         dist.destroy_process_group()
 

@@ -99,11 +99,8 @@ class AutoDriveDataset(Dataset):
         img = cv2.imread(data["image"], cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         # seg_label = cv2.imread(data["mask"], 0)
-        if self.cfg.num_seg_class == 3:
-            seg_label = cv2.imread(data["mask"])
-        else:
-            seg_label = cv2.imread(data["mask"], 0)
-        lane_label = cv2.imread(data["lane"], 0)
+        seg_label = self.read_seg_label(data["mask"])
+        lane_label = self.read_lane_label(data["lane"])
         #print(lane_label.shape)
         # print(seg_label.shape)
         # print(lane_label.shape)
@@ -250,6 +247,14 @@ class AutoDriveDataset(Dataset):
         db_selected = ...
         return db_selected
 
+    def read_seg_label(self, path):
+        if self.cfg.num_seg_class == 3:
+            return cv2.imread(path)
+        return cv2.imread(path, 0)
+
+    def read_lane_label(self, path):
+        return cv2.imread(path, 0)
+
     @staticmethod
     def collate_fn(batch):
         img, label, paths, shapes= zip(*batch)
@@ -261,4 +266,3 @@ class AutoDriveDataset(Dataset):
             label_seg.append(l_seg)
             label_lane.append(l_lane)
         return torch.stack(img, 0), [torch.cat(label_det, 0), torch.stack(label_seg, 0), torch.stack(label_lane, 0)], paths, shapes
-

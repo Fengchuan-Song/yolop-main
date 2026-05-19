@@ -166,7 +166,7 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
     coco91class = coco80_to_coco91_class()
     
     s = ('%20s' + '%12s' * 6) % ('Class', 'Images', 'Targets', 'P', 'R', 'mAP@.5', 'mAP@.5:.95')
-    p, r, f1, mp, mr, map50, map, t_inf, t_nms = 0., 0., 0., 0., 0., 0., 0., 0., 0.
+    p, r, f1, mp, mr, map50, map75, map, mar50_95, t_inf, t_nms = 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
     
     losses = AverageMeter()
 
@@ -412,13 +412,20 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
     # stats : [[all_img_correct]...[all_img_tcls]]
     stats = [np.concatenate(x, 0) for x in zip(*stats)]  # to numpy  zip(*) :unzip
 
-    map70 = None
-    map75 = None
     if len(stats) and stats[0].any():
         p, r, ap, f1, ap_class = ap_per_class(*stats, plot=False, save_dir=save_dir, names=names)
         ap50, ap70, ap75,ap = ap[:, 0], ap[:,4], ap[:,5],ap.mean(1)  # [P, R, AP@0.5, AP@0.5:0.95]
         mp, mr, map50, map70, map75, map = p.mean(), r.mean(), ap50.mean(), ap70.mean(),ap75.mean(),ap.mean()
         nt = np.bincount(stats[3].astype(np.int64), minlength=nc)  # number of targets per class
+        target_classes = np.where(nt > 0)[0]
+        if len(target_classes):
+            recalls = []
+            for i in range(niou):
+                recalls.extend(
+                    stats[0][stats[2] == c, i].sum() / nt[c]
+                    for c in target_classes
+                )
+            mar50_95 = np.mean(recalls) if recalls else 0.
     else:
         nt = torch.zeros(1)
 
@@ -484,8 +491,8 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
 
     # print(da_segment_result)
     # print(ll_segment_result)
-    detect_result = np.asarray([mp, mr, map50, map])
-    # print('mp:{},mr:{},map50:{},map:{}'.format(mp, mr, map50, map))
+    detect_result = np.asarray([mp, mr, map50, map, map75, mar50_95])
+    # print('mp:{},mr:{},map50:{},map:{},map75:{},mar50_95:{}'.format(mp, mr, map50, map, map75, mar50_95))
     #print segmet_result
     t = [T_inf.avg, T_nms.avg]
     return da_segment_result, ll_segment_result, detect_result, losses.avg, maps, t
