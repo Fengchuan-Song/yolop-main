@@ -450,7 +450,7 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
         confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
         if wandb and wandb.run:
             wandb.log({"Images": wandb_images})
-            wandb.log({"Validation": [wandb.Image(str(f), caption=f.name) for f in sorted(save_dir.glob('test*.jpg'))]})
+            wandb.log({"Validation": [wandb.Image(str(f), caption=f.name) for f in sorted(Path(save_dir).glob('test*.jpg'))]})
 
     # Save JSON
     if config.TEST.SAVE_JSON and len(jdict):
