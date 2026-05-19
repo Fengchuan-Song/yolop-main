@@ -39,7 +39,7 @@ def build_targets(cfg, predictions, targets, model):
     
     for i in range(det.nl):
         anchors = det.anchors[i] #[3,2]
-        gain[2:6] = torch.tensor(predictions[i].shape)[[3, 2, 3, 2]]  # xyxy gain
+        gain[2:6] = torch.tensor(predictions[i].shape, device=targets.device)[[3, 2, 3, 2]]  # xyxy gain
         # Match targets to anchors
         t = targets * gain
 
@@ -71,7 +71,7 @@ def build_targets(cfg, predictions, targets, model):
 
         # Append
         a = t[:, 6].long()  # anchor indices
-        indices.append((b, a, gj.clamp_(0, gain[3] - 1), gi.clamp_(0, gain[2] - 1)))  # image, anchor, grid indices
+        indices.append((b, a, gj.clamp_(0, int(gain[3].item() - 1)), gi.clamp_(0, int(gain[2].item() - 1))))  # image, anchor, grid indices
         tbox.append(torch.cat((gxy - gij, gwh), 1))  # box
         anch.append(anchors[a])  # anchors
         tcls.append(c)  # class
@@ -215,7 +215,6 @@ def connect_lane(image, shadow_height=0):
         split_labels = [[label,] for label in selected_label]
         mask_post = fitlane(mask, split_labels, labels, stats)
         return mask_post
-
 
 
 
