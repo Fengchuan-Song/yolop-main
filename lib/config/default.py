@@ -45,7 +45,7 @@ _C.LOSS.BOX_GAIN = 0.05  # box loss gain
 _C.LOSS.CLS_GAIN = 0.5  # classification loss gain
 _C.LOSS.OBJ_GAIN = 1.0  # object loss gain
 _C.LOSS.DA_SEG_GAIN = 0.2  # driving area segmentation loss gain
-_C.LOSS.LL_SEG_GAIN = 0.05  # lane line segmentation loss gain
+_C.LOSS.LL_SEG_GAIN = 0.02  # lane line segmentation loss gain
 _C.LOSS.LL_IOU_GAIN = 0.0 # lane line iou loss gain
 
 
