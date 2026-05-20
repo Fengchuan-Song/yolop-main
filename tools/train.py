@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument('--logDir',
                         help='log directory',
                         type=str,
-                        default='runs/')
+                        default='/root/autodl-tmp/yolop')
     parser.add_argument('--dataDir',
                         help='data directory',
                         type=str,

@@ -4,7 +4,7 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
-_C.LOG_DIR = 'runs/'
+_C.LOG_DIR = '/root/autodl-tmp/yolop'
 _C.WEIGHTS_DIR = '/root/autodl-tmp/yolop/weights'
 _C.GPUS = (0,)
 _C.WORKERS = 8

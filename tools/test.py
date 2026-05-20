@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument('--logDir',
                         help='log directory',
                         type=str,
-                        default='runs/')
+                        default='/root/autodl-tmp/yolop')
     parser.add_argument('--weights', nargs='+', type=str, default='/data2/zwt/wd/YOLOP/runs/BddDataset/detect_and_segbranch_whole/epoch-169.pth', help='model.pth path(s)')
     parser.add_argument('--conf_thres', type=float, default=0.001, help='object confidence threshold')
     parser.add_argument('--iou_thres', type=float, default=0.6, help='IOU threshold for NMS')
