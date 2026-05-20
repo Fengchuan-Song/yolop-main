@@ -430,7 +430,7 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
         nt = torch.zeros(1)
 
     # Print results
-    pf = '%20s' + '%12.3g' * 6  # print format
+    pf = '%20s' + '%12.6f' * 6  # print format
     print(pf % ('all', seen, nt.sum(), mp, mr, map50, map))
     #print(map70)
     #print(map75)
