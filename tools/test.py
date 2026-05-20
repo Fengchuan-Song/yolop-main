@@ -84,7 +84,7 @@ def main():
 
     # det_idx_range = [str(i) for i in range(0,25)]
     model_dict = model.state_dict()
-    checkpoint_file = args.weights
+    checkpoint_file = args.weights[0] if isinstance(args.weights, list) else args.weights
     logger.info("=> loading checkpoint '{}'".format(checkpoint_file))
     checkpoint = torch.load(checkpoint_file)
     checkpoint_dict = checkpoint['state_dict']
