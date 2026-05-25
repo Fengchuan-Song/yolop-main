@@ -83,7 +83,14 @@ def read_split_images(split, data_root, image_folder, image_format):
     suffix = image_format if image_format.startswith('.') else '.' + image_format
 
     with split.open('r') as f:
-        items = [line.strip() for line in f if line.strip()]
+        items = []
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            # Some WaterScenes split files store annotations after the image path:
+            # image.jpg x1,y1,x2,y2,cls ...
+            items.append(line.split()[0])
 
     image_paths = []
     for item in items:
